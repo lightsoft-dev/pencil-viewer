@@ -398,6 +398,29 @@ class RealtimeCollaboration {
         }
     }
 
+    async editReply(commentId, replyId, newText) {
+        if (!this.roomId) return;
+        try {
+            await db.collection('rooms').doc(this.roomId)
+                .collection('comments').doc(commentId)
+                .collection('replies').doc(replyId)
+                .update({ text: newText, editedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        } catch (err) {
+            console.error('[Collab] Edit reply failed:', err);
+        }
+    }
+
+    async deleteReply(commentId, replyId) {
+        if (!this.roomId) return;
+        try {
+            await db.collection('rooms').doc(this.roomId)
+                .collection('comments').doc(commentId)
+                .collection('replies').doc(replyId).delete();
+        } catch (err) {
+            console.error('[Collab] Delete reply failed:', err);
+        }
+    }
+
     async toggleResolve(commentId) {
         try {
             const ref = db.collection('rooms').doc(this.roomId)

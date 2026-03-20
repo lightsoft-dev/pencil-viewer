@@ -595,17 +595,25 @@
 
         const time = formatTime(comment.timestamp);
         const editedLabel = comment.editedAt ? ' <span class="comment-edited-label">(수정됨)</span>' : '';
-        const replies = comment.replies ? Object.values(comment.replies) : [];
+        const replyEntries = comment.replies ? Object.entries(comment.replies) : [];
 
-        let repliesHtml = replies.map(r => `
-            <div class="comment-thread-reply">
+        let repliesHtml = replyEntries.map(([replyId, r]) => `
+            <div class="comment-thread-reply" data-reply-id="${replyId}">
                 <div class="comment-thread-avatar" style="background:${r.authorColor}">${(r.authorName || '?')[0]}</div>
                 <div class="comment-thread-body">
                     <div class="comment-thread-meta">
                         <span class="comment-thread-author">${r.authorName}</span>
-                        <span class="comment-thread-time">${formatTime(r.timestamp)}</span>
+                        <span class="comment-thread-time">${formatTime(r.timestamp)}${r.editedAt ? ' <span class="comment-edited-label">(수정됨)</span>' : ''}</span>
+                        <div class="reply-actions">
+                            <button class="reply-edit-btn" data-reply-id="${replyId}" title="수정">
+                                <span class="material-symbols-rounded">edit</span>
+                            </button>
+                            <button class="reply-delete-btn" data-reply-id="${replyId}" title="삭제">
+                                <span class="material-symbols-rounded">delete</span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="comment-thread-text">${r.text}</div>
+                    <div class="comment-thread-text" data-reply-text="${replyId}">${r.text}</div>
                 </div>
             </div>
         `).join('');
@@ -633,7 +641,7 @@
                         </button>
                     </div>
                 </div>
-                ${replies.length ? '<div class="comment-thread-replies">' + repliesHtml + '</div>' : ''}
+                ${replyEntries.length ? '<div class="comment-thread-replies">' + repliesHtml + '</div>' : ''}
             </div>
             <div class="comment-thread-reply-input">
                 <textarea class="comment-popup-input reply-input" placeholder="답글을 입력하세요…"></textarea>
@@ -695,6 +703,51 @@
                 await state.collab.deleteComment(comment.id);
                 popup.remove();
             }
+        });
+
+        // Reply edit buttons
+        popup.querySelectorAll('.reply-edit-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const replyId = btn.getAttribute('data-reply-id');
+                const replyDiv = popup.querySelector(`.comment-thread-reply[data-reply-id="${replyId}"]`);
+                const textEl = replyDiv.querySelector(`[data-reply-text="${replyId}"]`);
+                const currentText = textEl.textContent;
+                textEl.innerHTML = `
+                    <textarea class="comment-edit-textarea">${currentText}</textarea>
+                    <div class="comment-edit-actions">
+                        <button class="reply-edit-cancel">취소</button>
+                        <button class="reply-edit-save">저장</button>
+                    </div>
+                `;
+                textEl.querySelector('.reply-edit-cancel').addEventListener('click', () => {
+                    textEl.textContent = currentText;
+                });
+                textEl.querySelector('.reply-edit-save').addEventListener('click', async () => {
+                    const newText = textEl.querySelector('textarea').value.trim();
+                    if (!newText) return;
+                    await state.collab.editReply(comment.id, replyId, newText);
+                    popup.remove();
+                    setTimeout(() => {
+                        const updated = state.collab.comments.find(c => c.id === comment.id);
+                        if (updated) showCommentThread(updated);
+                    }, 300);
+                });
+            });
+        });
+
+        // Reply delete buttons
+        popup.querySelectorAll('.reply-delete-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const replyId = btn.getAttribute('data-reply-id');
+                if (confirm('이 답글을 삭제하시겠습니까?')) {
+                    await state.collab.deleteReply(comment.id, replyId);
+                    popup.remove();
+                    setTimeout(() => {
+                        const updated = state.collab.comments.find(c => c.id === comment.id);
+                        if (updated) showCommentThread(updated);
+                    }, 300);
+                }
+            });
         });
 
         // Reply

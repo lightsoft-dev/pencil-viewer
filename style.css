@@ -1945,6 +1945,74 @@ html, body {
     font-size: 16px;
 }
 
+/* ============ Reply Actions ============ */
+.reply-actions {
+    display: none;
+    gap: 2px;
+    margin-left: auto;
+}
+
+.comment-thread-reply:hover .reply-actions {
+    display: flex;
+}
+
+.reply-edit-btn,
+.reply-delete-btn {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0;
+}
+
+.reply-edit-btn:hover {
+    background: var(--bg-hover);
+    color: var(--accent-primary);
+}
+
+.reply-delete-btn:hover {
+    background: var(--bg-hover);
+    color: #ef4444;
+}
+
+.reply-edit-btn .material-symbols-rounded,
+.reply-delete-btn .material-symbols-rounded {
+    font-size: 14px;
+}
+
+.reply-edit-cancel,
+.reply-edit-save {
+    padding: 4px 12px;
+    border-radius: 4px;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+
+.reply-edit-cancel {
+    background: transparent;
+    color: var(--text-tertiary);
+}
+
+.reply-edit-save {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.comment-thread-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 /* ============ Remote Cursor Animation ============ */
 .remote-cursor {
     transition: transform 0.1s ease-out;

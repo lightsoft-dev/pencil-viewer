@@ -1814,6 +1814,137 @@ html, body {
     cursor: crosshair !important;
 }
 
+/* ============ HTML Comment Pins (replaces SVG pins) ============ */
+.comment-pin-html {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2.5px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    z-index: 50;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transition: box-shadow 0.15s, transform 0.15s;
+    user-select: none;
+    pointer-events: auto;
+}
+
+.comment-pin-html:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    transform: translate(-50%, -50%) scale(1.15);
+}
+
+.comment-pin-html:active {
+    cursor: grabbing;
+    transform: translate(-50%, -50%) scale(1.05);
+}
+
+.comment-pin-html span {
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    line-height: 1;
+}
+
+.comment-pin-html.resolved {
+    opacity: 0.5;
+}
+
+.comment-pin-html.new-comment {
+    animation: pinPop 0.2s ease;
+}
+
+@keyframes pinPop {
+    from { transform: translate(-50%, -50%) scale(0); }
+    to { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ============ Comment Edit UI ============ */
+.comment-edit-textarea {
+    width: 100%;
+    min-height: 60px;
+    padding: 8px 10px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--accent-primary);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    resize: vertical;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.comment-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.comment-edit-cancel,
+.comment-edit-save {
+    padding: 4px 12px;
+    border-radius: 4px;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+
+.comment-edit-cancel {
+    background: transparent;
+    color: var(--text-tertiary);
+}
+
+.comment-edit-cancel:hover {
+    color: var(--text-primary);
+}
+
+.comment-edit-save {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.comment-edit-save:hover {
+    opacity: 0.9;
+}
+
+.comment-edited-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+.comment-edit-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0;
+}
+
+.comment-edit-btn:hover {
+    background: var(--bg-hover);
+    color: var(--accent-primary);
+}
+
+.comment-edit-btn .material-symbols-rounded {
+    font-size: 16px;
+}
+
 /* ============ Remote Cursor Animation ============ */
 .remote-cursor {
     transition: transform 0.1s ease-out;

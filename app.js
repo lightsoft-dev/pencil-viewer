@@ -248,7 +248,19 @@
     function applyTransform() {
         els['canvas-content'].setAttribute('transform', `translate(${state.panX}, ${state.panY}) scale(${state.zoom})`);
         els['cursors-layer'].setAttribute('transform', `translate(${state.panX}, ${state.panY}) scale(${state.zoom})`);
-        els['comments-layer'].setAttribute('transform', `translate(${state.panX}, ${state.panY}) scale(${state.zoom})`);
+        // Comment pins are HTML overlays — reposition on transform
+        updateCommentPinPositions();
+    }
+
+    function updateCommentPinPositions() {
+        document.querySelectorAll('.comment-pin-html').forEach(pin => {
+            const cx = parseFloat(pin.dataset.cx);
+            const cy = parseFloat(pin.dataset.cy);
+            const sx = cx * state.zoom + state.panX;
+            const sy = cy * state.zoom + state.panY;
+            pin.style.left = sx + 'px';
+            pin.style.top = sy + 'px';
+        });
     }
 
     function fitToScreen(bounds) {
@@ -441,41 +453,23 @@
     function showCommentInput(x, y) {
         closeAllCommentPopups();
 
-        // Create comment pin on canvas
-        const ns = 'http://www.w3.org/2000/svg';
-        const g = document.createElementNS(ns, 'g');
-        g.classList.add('comment-pin', 'new-comment');
-        g.setAttribute('transform', `translate(${x}, ${y})`);
-
-        // Pin icon
-        const circle = document.createElementNS(ns, 'circle');
-        circle.setAttribute('r', 14);
-        circle.setAttribute('fill', state.collab.color);
-        circle.setAttribute('stroke', 'white');
-        circle.setAttribute('stroke-width', 2.5);
-
-        const icon = document.createElementNS(ns, 'text');
-        icon.setAttribute('text-anchor', 'middle');
-        icon.setAttribute('dominant-baseline', 'central');
-        icon.setAttribute('fill', 'white');
-        icon.setAttribute('font-size', '12');
-        icon.setAttribute('font-weight', '700');
-        icon.textContent = '+';
-
-        g.appendChild(circle);
-        g.appendChild(icon);
-        els['comments-layer'].appendChild(g);
+        // Create HTML comment pin (new comment indicator)
+        const pin = document.createElement('div');
+        pin.className = 'comment-pin-html new-comment';
+        pin.style.left = (x * state.zoom + state.panX) + 'px';
+        pin.style.top = (y * state.zoom + state.panY) + 'px';
+        pin.dataset.cx = x;
+        pin.dataset.cy = y;
+        pin.innerHTML = '<span>+</span>';
+        pin.style.background = state.collab.color;
+        els['canvas-container'].appendChild(pin);
 
         // Create HTML popup for input
         const popup = document.createElement('div');
         popup.className = 'comment-popup';
         popup.style.position = 'absolute';
-
-        // Position in screen coordinates
-        const screenX = x * state.zoom + state.panX;
-        const screenY = y * state.zoom + state.panY;
-        popup.style.left = (screenX + 20) + 'px';
-        popup.style.top = (screenY - 10) + 'px';
+        popup.style.left = (x * state.zoom + state.panX + 20) + 'px';
+        popup.style.top = (y * state.zoom + state.panY - 10) + 'px';
 
         popup.innerHTML = `
             <div class="comment-popup-header">
@@ -484,7 +478,7 @@
             </div>
             <textarea class="comment-popup-input" placeholder="코멘트를 입력하세요…" autofocus></textarea>
             <div class="comment-popup-actions">
-                <button class="comment-cancel-btn" onclick="this.closest('.comment-popup').remove()">취소</button>
+                <button class="comment-cancel-btn">취소</button>
                 <button class="comment-submit-btn">게시</button>
             </div>
         `;
@@ -493,80 +487,98 @@
 
         const textarea = popup.querySelector('.comment-popup-input');
         const submitBtn = popup.querySelector('.comment-submit-btn');
+        const cancelBtn = popup.querySelector('.comment-cancel-btn');
 
-        // Auto focus
         setTimeout(() => textarea.focus(), 50);
 
-        // Submit
+        const cleanup = () => { popup.remove(); pin.remove(); };
+
         const submit = async () => {
             const text = textarea.value.trim();
             if (!text) return;
             submitBtn.disabled = true;
             submitBtn.textContent = '게시 중…';
-
             await state.collab.addComment(text, x, y);
-            popup.remove();
-            g.remove();
+            cleanup();
         };
 
         submitBtn.addEventListener('click', submit);
+        cancelBtn.addEventListener('click', cleanup);
         textarea.addEventListener('keydown', e => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                submit();
-            }
-            if (e.key === 'Escape') {
-                popup.remove();
-                g.remove();
-            }
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submit(); }
+            if (e.key === 'Escape') cleanup();
         });
     }
 
     function renderCommentPin(comment) {
-        const ns = 'http://www.w3.org/2000/svg';
-
-        // Remove existing pin for this comment
-        const existing = els['comments-layer'].querySelector(`[data-comment-id="${comment.id}"]`);
+        // Remove existing HTML pin for this comment
+        const existing = els['canvas-container'].querySelector(`.comment-pin-html[data-comment-id="${comment.id}"]`);
         if (existing) existing.remove();
 
         if (!comment.x && !comment.y) return;
 
-        const g = document.createElementNS(ns, 'g');
-        g.classList.add('comment-pin');
-        g.setAttribute('data-comment-id', comment.id);
-        g.setAttribute('transform', `translate(${comment.x}, ${comment.y})`);
-        g.style.cursor = 'pointer';
-
-        // Determine pin number
         const pinIndex = state.collab.comments.findIndex(c => c.id === comment.id) + 1;
-
-        // Pin background
-        const circle = document.createElementNS(ns, 'circle');
-        circle.setAttribute('r', 14);
-        circle.setAttribute('fill', comment.resolved ? '#636E72' : (comment.authorColor || '#6C5CE7'));
-        circle.setAttribute('stroke', 'white');
-        circle.setAttribute('stroke-width', 2.5);
-
-        // Pin number
-        const numText = document.createElementNS(ns, 'text');
-        numText.setAttribute('text-anchor', 'middle');
-        numText.setAttribute('dominant-baseline', 'central');
-        numText.setAttribute('fill', 'white');
-        numText.setAttribute('font-size', '11');
-        numText.setAttribute('font-weight', '700');
-        numText.setAttribute('font-family', 'Inter, sans-serif');
-        numText.textContent = pinIndex;
-
-        g.appendChild(circle);
-        g.appendChild(numText);
+        const pin = document.createElement('div');
+        pin.className = `comment-pin-html ${comment.resolved ? 'resolved' : ''}`;
+        pin.setAttribute('data-comment-id', comment.id);
+        pin.dataset.cx = comment.x;
+        pin.dataset.cy = comment.y;
+        pin.style.left = (comment.x * state.zoom + state.panX) + 'px';
+        pin.style.top = (comment.y * state.zoom + state.panY) + 'px';
+        pin.style.background = comment.resolved ? '#636E72' : (comment.authorColor || '#6C5CE7');
+        pin.innerHTML = `<span>${pinIndex}</span>`;
 
         // Click to show thread
-        g.addEventListener('click', (e) => {
+        pin.addEventListener('click', (e) => {
             e.stopPropagation();
-            showCommentThread(comment);
+            const latest = state.collab.comments.find(c => c.id === comment.id) || comment;
+            showCommentThread(latest);
         });
 
-        els['comments-layer'].appendChild(g);
+        // Drag to move
+        let isDragging = false, dragStartX, dragStartY, pinOrigX, pinOrigY;
+        pin.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            isDragging = false;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            pinOrigX = comment.x;
+            pinOrigY = comment.y;
+
+            const onMove = (me) => {
+                const dx = me.clientX - dragStartX;
+                const dy = me.clientY - dragStartY;
+                if (Math.abs(dx) > 4 || Math.abs(dy) > 4) isDragging = true;
+                if (isDragging) {
+                    const newScreenX = pinOrigX * state.zoom + state.panX + dx;
+                    const newScreenY = pinOrigY * state.zoom + state.panY + dy;
+                    pin.style.left = newScreenX + 'px';
+                    pin.style.top = newScreenY + 'px';
+                }
+            };
+
+            const onUp = async (me) => {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+                if (isDragging) {
+                    const dx = me.clientX - dragStartX;
+                    const dy = me.clientY - dragStartY;
+                    const newX = pinOrigX + dx / state.zoom;
+                    const newY = pinOrigY + dy / state.zoom;
+                    comment.x = newX;
+                    comment.y = newY;
+                    pin.dataset.cx = newX;
+                    pin.dataset.cy = newY;
+                    await state.collab.moveComment(comment.id, newX, newY);
+                }
+            };
+
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+            e.stopPropagation();
+        });
+
+        els['canvas-container'].appendChild(pin);
     }
 
     function showCommentThread(comment) {
@@ -582,6 +594,7 @@
         popup.style.top = (screenY - 10) + 'px';
 
         const time = formatTime(comment.timestamp);
+        const editedLabel = comment.editedAt ? ' <span class="comment-edited-label">(수정됨)</span>' : '';
         const replies = comment.replies ? Object.values(comment.replies) : [];
 
         let repliesHtml = replies.map(r => `
@@ -604,15 +617,20 @@
                     <div class="comment-thread-body">
                         <div class="comment-thread-meta">
                             <span class="comment-thread-author">${comment.authorName}</span>
-                            <span class="comment-thread-time">${time}</span>
+                            <span class="comment-thread-time">${time}${editedLabel}</span>
                         </div>
-                        <div class="comment-thread-text">${comment.text}</div>
+                        <div class="comment-thread-text" data-text-display>${comment.text}</div>
                     </div>
                     <div class="comment-thread-actions-top">
+                        <button class="comment-edit-btn" title="수정">
+                            <span class="material-symbols-rounded">edit</span>
+                        </button>
                         <button class="comment-resolve-btn" title="${comment.resolved ? '다시 열기' : '해결됨'}">
                             <span class="material-symbols-rounded">${comment.resolved ? 'refresh' : 'check_circle'}</span>
                         </button>
-                        ${comment.authorId === state.collab.userId ? '<button class="comment-delete-btn" title="삭제"><span class="material-symbols-rounded">delete</span></button>' : ''}
+                        <button class="comment-delete-btn" title="삭제">
+                            <span class="material-symbols-rounded">delete</span>
+                        </button>
                     </div>
                 </div>
                 ${replies.length ? '<div class="comment-thread-replies">' + repliesHtml + '</div>' : ''}
@@ -627,6 +645,44 @@
 
         els['canvas-container'].appendChild(popup);
 
+        // Edit button
+        popup.querySelector('.comment-edit-btn')?.addEventListener('click', () => {
+            const textEl = popup.querySelector('[data-text-display]');
+            const currentText = comment.text;
+            textEl.innerHTML = `
+                <textarea class="comment-edit-textarea">${currentText}</textarea>
+                <div class="comment-edit-actions">
+                    <button class="comment-edit-cancel">취소</button>
+                    <button class="comment-edit-save">저장</button>
+                </div>
+            `;
+            const editArea = textEl.querySelector('.comment-edit-textarea');
+            editArea.focus();
+            editArea.setSelectionRange(editArea.value.length, editArea.value.length);
+
+            textEl.querySelector('.comment-edit-cancel').addEventListener('click', () => {
+                textEl.innerHTML = currentText;
+            });
+
+            textEl.querySelector('.comment-edit-save').addEventListener('click', async () => {
+                const newText = editArea.value.trim();
+                if (!newText) return;
+                await state.collab.editComment(comment.id, newText);
+                comment.text = newText;
+                textEl.innerHTML = newText + ' <span class="comment-edited-label">(수정됨)</span>';
+            });
+
+            editArea.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    textEl.querySelector('.comment-edit-save').click();
+                }
+                if (e.key === 'Escape') {
+                    textEl.innerHTML = currentText;
+                }
+            });
+        });
+
         // Resolve button
         popup.querySelector('.comment-resolve-btn')?.addEventListener('click', async () => {
             await state.collab.toggleResolve(comment.id);
@@ -635,8 +691,10 @@
 
         // Delete button
         popup.querySelector('.comment-delete-btn')?.addEventListener('click', async () => {
-            await state.collab.deleteComment(comment.id);
-            popup.remove();
+            if (confirm('이 코멘트를 삭제하시겠습니까?')) {
+                await state.collab.deleteComment(comment.id);
+                popup.remove();
+            }
         });
 
         // Reply
@@ -648,9 +706,7 @@
             if (!text) return;
             await state.collab.addReply(comment.id, text);
             replyInput.value = '';
-            // Refresh thread
             popup.remove();
-            // Small delay to get updated data
             setTimeout(() => {
                 const updated = state.collab.comments.find(c => c.id === comment.id);
                 if (updated) showCommentThread(updated);
@@ -659,10 +715,7 @@
 
         replyBtn?.addEventListener('click', submitReply);
         replyInput?.addEventListener('keydown', e => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                submitReply();
-            }
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submitReply(); }
         });
 
         setTimeout(() => replyInput?.focus(), 50);
@@ -670,8 +723,7 @@
 
     function closeAllCommentPopups() {
         document.querySelectorAll('.comment-popup').forEach(p => p.remove());
-        // Also remove new-comment pins
-        document.querySelectorAll('.comment-pin.new-comment').forEach(p => p.remove());
+        document.querySelectorAll('.comment-pin-html.new-comment').forEach(p => p.remove());
     }
 
     function renderCommentInPanel(comment) {
@@ -763,8 +815,8 @@
 
         collab.onCommentUpdate = (comment, removedId) => {
             if (removedId) {
-                // Comment removed
-                const pin = els['comments-layer'].querySelector(`[data-comment-id="${removedId}"]`);
+                // Comment removed — find HTML pin
+                const pin = els['canvas-container'].querySelector(`.comment-pin-html[data-comment-id="${removedId}"]`);
                 if (pin) pin.remove();
                 const panelItem = els['comments-list'].querySelector(`[data-comment-panel-id="${removedId}"]`);
                 if (panelItem) panelItem.remove();

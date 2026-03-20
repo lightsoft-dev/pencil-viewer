@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "myweatherpal-e83ae"
+  },
+  "targets": {
+    "myweatherpal-e83ae": {
+      "hosting": {
+        "viewer": [
+          "pencil-viewer-lightsoft"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

@@ -105,7 +105,7 @@
         // Close comment popup on outside click (but not from canvas)
         document.addEventListener('click', e => {
             if (e.target.closest('.canvas-container')) return; // handled by onCanvasClick
-            if (!e.target.closest('.comment-popup') && !e.target.closest('.comment-pin') && !e.target.closest('.comment-mode-btn')) {
+            if (!e.target.closest('.comment-popup') && !e.target.closest('.comment-pin-html') && !e.target.closest('.comment-mode-btn')) {
                 closeAllCommentPopups();
             }
         });
@@ -327,7 +327,7 @@
     }
 
     function onCanvasClick(e) {
-        if (e.target.closest('.comment-popup') || e.target.closest('.comment-pin')) return;
+        if (e.target.closest('.comment-popup') || e.target.closest('.comment-pin-html')) return;
 
         if (state.commentMode) {
             // Place a comment at the clicked position

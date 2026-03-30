@@ -1,134 +1,134 @@
-# ✏️ Pencil.dev — 실시간 협업 디자인 뷰어
+# ✏️ Pencil.dev — Real-time Collaborative Design Viewer
 
-> .pen 파일을 열고, 팀원과 실시간으로 디자인을 리뷰하세요.
+> Open .pen files and review designs in real-time with your team.
 
-🔗 **배포 링크**: [pencil-viewer-lightsoft.web.app](https://pencil-viewer-lightsoft.web.app)
+🔗 **Deployment Link**: [pencil-viewer-lightsoft.web.app](https://pencil-viewer-lightsoft.web.app)
 
 ---
 
-## 📸 미리보기
+## 📸 Preview
 
-| 디자인 뷰어 | 공유 모달 | 코멘트 |
+| Design Viewer | Share Modal | Comments |
 |:-----------:|:---------:|:------:|
-| 레이어 탐색 & 속성 확인 | 링크 공유로 실시간 협업 | 피그마 스타일 위치 기반 코멘트 |
+| Layer exploration & Properties | Real-time collaboration via link sharing | Figma-style position-based comments |
 
 ---
 
-## ✨ 주요 기능
+## ✨ Key Features
 
-### 🎨 디자인 뷰어
-- `.pen` / `.json` 파일 드래그 앤 드롭 또는 파일 선택
-- SVG 기반 고품질 렌더링
-- 줌 인/아웃, 화면 맞추기, 패닝
+### 🎨 Design Viewer
+- Drag-and-drop `.pen` / `.json` files or select them manually
+- High-quality SVG-based rendering
+- Zoom in/out, fit to screen, and panning
 
-### 🗂️ 레이어 패널
-- 디자인 요소의 트리 구조 탐색
-- 레이어 검색
-- 레이어 선택 시 속성 확인
+### 🗂️ Layers Panel
+- Explore the tree structure of design elements
+- Search for layers
+- View properties upon layer selection
 
-### 🔗 실시간 공유
-- **공유 버튼** → 자동 생성된 링크를 팀원에게 전달
-- URL 해시 기반 (`#room=방ID`) 간편 참여
-- Firestore 실시간 동기화
+### 🔗 Real-time Sharing
+- **Share button** → Automatically generate a link to send to your team
+- Easy participation using URL hashes (`#room=RoomID`)
+- Firestore real-time synchronization
 
-### 👥 실시간 협업
-- 접속 중인 사용자 아바타 표시
-- 커서 위치 실시간 동기화
-- 입장/퇴장 알림
+### 👥 Real-time Collaboration
+- Display avatars of currently connected users
+- Real-time cursor position synchronization
+- Join/leave notifications
 
-### 💬 피그마 스타일 코멘트
-- 캔버스 위 정확한 위치에 코멘트 배치
-- 번호 핀으로 시각적 표시
-- 답글, 해결/미해결 토글, 삭제
-- 우측 히스토리 패널에서 전체 코멘트 확인
-- 모든 참여자에게 실시간 동기화
+### 💬 Figma-style Comments
+- Place comments at precise locations on the canvas
+- Numbered pins for visual indication
+- Replies, resolve/unresolve toggle, delete
+- View all comments in the right history panel
+- Real-time synchronization for all participants
 
 ---
 
-## 🚀 시작하기
+## 🚀 Getting Started
 
-### 로컬 실행
+### Run Locally
 
 ```bash
-# 저장소 클론
+# Clone the repository
 git clone https://github.com/lightsoft-dev/pencil-viewer.git
 cd pencil-viewer
 
-# 로컬 서버 실행 (아무 정적 서버 사용 가능)
+# Run a local server (any static server will do)
 npx serve . -l 8080
 
-# 또는 Python
+# Or Python
 python3 -m http.server 8080
 ```
 
-`http://localhost:8080` 에서 확인하세요.
+Check it out at `http://localhost:8080`.
 
-### Firebase 배포
+### Firebase Deployment
 
 ```bash
-# Firebase CLI 설치 (이미 설치된 경우 건너뛰기)
+# Install Firebase CLI (skip if already installed)
 npm install -g firebase-tools
 
-# 로그인
+# Login
 firebase login
 
-# 배포
+# Deploy
 firebase deploy --only hosting:viewer
 ```
 
 ---
 
-## 🏗️ 기술 스택
+## 🏗️ Tech Stack
 
-| 항목 | 기술 |
+| Category | Technology |
 |------|------|
-| **프론트엔드** | Vanilla HTML / CSS / JavaScript |
-| **렌더링** | SVG (Canvas API 기반 좌표 변환) |
-| **백엔드** | Firebase Firestore (실시간 동기화) |
-| **호스팅** | Firebase Hosting |
-| **인증** | 닉네임 기반 (별도 로그인 불필요) |
+| **Frontend** | Vanilla HTML / CSS / JavaScript |
+| **Rendering** | SVG (Coordinate transformation based on Canvas API) |
+| **Backend** | Firebase Firestore (Real-time synchronization) |
+| **Hosting** | Firebase Hosting |
+| **Authentication** | Nickname-based (No separate login required) |
 
 ---
 
-## 📂 프로젝트 구조
+## 📂 Project Structure
 
 ```
 pencil-viewer/
-├── index.html          # 메인 HTML
-├── app.js              # 앱 로직 (이벤트, UI, 협업 연동)
-├── pen-renderer.js     # .pen → SVG 렌더링 엔진
-├── realtime.js         # Firestore 실시간 협업 모듈
-├── firebase-config.js  # Firebase 설정
-├── style.css           # 전체 스타일
-├── firebase.json       # Firebase Hosting 설정
-├── .firebaserc         # Firebase 프로젝트 설정
-├── demo.json           # 데모 디자인 파일
-├── test.pen            # 테스트 .pen 파일
-└── images/             # 디자인에 사용되는 이미지 에셋
+├── index.html          # Main HTML
+├── app.js              # App logic (events, UI, collaboration integration)
+├── pen-renderer.js     # .pen → SVG rendering engine
+├── realtime.js         # Firestore real-time collaboration module
+├── firebase-config.js  # Firebase configuration
+├── style.css           # Global styles
+├── firebase.json       # Firebase Hosting configuration
+├── .firebaserc         # Firebase project configuration
+├── demo.json           # Demo design file
+├── test.pen            # Test .pen file
+└── images/             # Image assets used in designs
 ```
 
 ---
 
-## 🔥 Firestore 데이터 구조
+## 🔥 Firestore Data Structure
 
 ```
 rooms/{roomId}
 ├── fileName, createdAt, createdBy
-├── data/document          # 디자인 데이터 (JSON)
-│   └── chunks/            # 대용량 파일 청크 분할 저장
-├── users/{userId}         # 프레젠스 & 커서 위치
-└── comments/{commentId}   # 코멘트
-    └── replies/{replyId}  # 답글
+├── data/document          # Design data (JSON)
+│   └── chunks/            # Splitting and storing large files into chunks
+├── users/{userId}         # Presence & cursor positions
+└── comments/{commentId}   # Comments
+    └── replies/{replyId}  # Replies
 ```
 
 ---
 
-## 📄 라이선스
+## 📄 License
 
 MIT License
 
 ---
 
 <p align="center">
-  <b>Pencil.dev</b> — 디자인 리뷰를 더 쉽고 빠르게 ✏️
+  <b>Pencil.dev</b> — Making design review easier and faster ✏️
 </p>
